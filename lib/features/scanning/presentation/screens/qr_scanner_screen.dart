@@ -61,7 +61,8 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
       title: 'Camera Permission Required',
       message: 'UCI KIGALI needs camera access to scan QR codes from tickets. Please enable camera permission in settings.',
       onSettingsPressed: () {
-        PermissionService.openAppSettings();
+        // Simple approach - just request permission again
+        _requestCameraPermission();
       },
     );
   }
