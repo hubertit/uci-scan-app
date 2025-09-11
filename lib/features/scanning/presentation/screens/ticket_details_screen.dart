@@ -39,11 +39,11 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
           'attendee': 'John Doe',
           'email': 'john.doe@example.com',
           'date': '2024-03-15',
-          'time': '09:00 AM',
           'venue': 'Kigali Convention Centre',
           'status': 'valid',
-          'seat': 'A-15',
-          'price': '50,000 RWF',
+          'area': widget.ticketId.contains('LOC') ? 'LOC/UCI' : 'Sales', // Dynamic based on ticket ID
+          'ticketType': 'VIP', // Will come from API - determines frame color
+          'frameColor': '#FF6B35', // Will come from API - hex color for frame
         };
         isLoading = false;
       });
@@ -179,7 +179,73 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
             ),
           ),
           
-          const SizedBox(height: AppTheme.spacing24),
+          const SizedBox(height: AppTheme.spacing16),
+          
+          // Ticket ID Card
+          Container(
+            padding: const EdgeInsets.all(AppTheme.spacing20),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(AppTheme.borderRadius16),
+              border: Border.all(
+                color: AppTheme.primaryColor.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor,
+                    borderRadius: BorderRadius.circular(AppTheme.borderRadius12),
+                  ),
+                  child: const Icon(
+                    Icons.qr_code,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: AppTheme.spacing16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ticket ID',
+                        style: AppTheme.titleMedium.copyWith(
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: AppTheme.spacing4),
+                      Text(
+                        widget.ticketId,
+                        style: AppTheme.bodyMedium.copyWith(
+                          color: AppTheme.textPrimaryColor,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: AppTheme.spacing16),
+          
+          // Ticket Type Indicator
+          _buildTicketTypeIndicator(),
+          
+          const SizedBox(height: AppTheme.spacing16),
+          
+          // Area Indicator
+          _buildAreaIndicator(),
+          
+          const SizedBox(height: AppTheme.spacing16),
           
           // Ticket Information
           Text(
@@ -193,7 +259,7 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
           
           _buildInfoCard(),
           
-          const SizedBox(height: AppTheme.spacing24),
+          const SizedBox(height: AppTheme.spacing16),
           
           // Actions
           PrimaryButton(
@@ -204,7 +270,7 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
             icon: Icons.qr_code_scanner,
           ),
           
-          const SizedBox(height: AppTheme.spacing12),
+          const SizedBox(height: AppTheme.spacing8),
           
           PrimaryButton(
             label: 'Back to Home',
@@ -244,10 +310,8 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
           _buildInfoRow('Attendee', ticketData!['attendee']),
           _buildInfoRow('Email', ticketData!['email']),
           _buildInfoRow('Date', ticketData!['date']),
-          _buildInfoRow('Time', ticketData!['time']),
           _buildInfoRow('Venue', ticketData!['venue']),
-          _buildInfoRow('Seat', ticketData!['seat']),
-          _buildInfoRow('Price', ticketData!['price']),
+          _buildInfoRow('Ticket Type', ticketData!['ticketType']),
         ],
       ),
     );
@@ -282,5 +346,156 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildTicketTypeIndicator() {
+    final ticketType = ticketData!['ticketType'] as String;
+    final frameColor = _parseColor(ticketData!['frameColor'] as String);
+    
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacing20),
+      decoration: BoxDecoration(
+        color: frameColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius16),
+        border: Border.all(
+          color: frameColor.withOpacity(0.3),
+          width: 2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: frameColor,
+              borderRadius: BorderRadius.circular(AppTheme.borderRadius12),
+            ),
+            child: const Icon(
+              Icons.confirmation_number,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacing16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ticket Type',
+                  style: AppTheme.titleMedium.copyWith(
+                    color: frameColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spacing4),
+                Text(
+                  ticketType,
+                  style: AppTheme.bodyLarge.copyWith(
+                    color: AppTheme.textPrimaryColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spacing4),
+                Text(
+                  'This ticket type determines your access level',
+                  style: AppTheme.bodySmall.copyWith(
+                    color: AppTheme.textSecondaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAreaIndicator() {
+    final area = ticketData!['area'] as String;
+    final isSales = area == 'Sales';
+    
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacing20),
+      decoration: BoxDecoration(
+        color: isSales 
+            ? Colors.blue.withOpacity(0.1) 
+            : Colors.green.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius16),
+        border: Border.all(
+          color: isSales 
+              ? Colors.blue.withOpacity(0.3) 
+              : Colors.green.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: isSales ? Colors.blue : Colors.green,
+              borderRadius: BorderRadius.circular(AppTheme.borderRadius12),
+            ),
+            child: Icon(
+              isSales ? Icons.shopping_cart : Icons.business,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacing16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Seating Area',
+                  style: AppTheme.titleMedium.copyWith(
+                    color: isSales ? Colors.blue : Colors.green,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spacing4),
+                Text(
+                  area,
+                  style: AppTheme.bodyLarge.copyWith(
+                    color: AppTheme.textPrimaryColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spacing4),
+                Text(
+                  isSales 
+                      ? 'General admission seating area'
+                      : 'VIP and premium seating area',
+                  style: AppTheme.bodySmall.copyWith(
+                    color: AppTheme.textSecondaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _parseColor(String hexColor) {
+    try {
+      // Remove # if present
+      String cleanHex = hexColor.replaceAll('#', '');
+      
+      // Add alpha if not present (assume full opacity)
+      if (cleanHex.length == 6) {
+        cleanHex = 'FF$cleanHex';
+      }
+      
+      return Color(int.parse(cleanHex, radix: 16));
+    } catch (e) {
+      // Fallback to primary color if parsing fails
+      return AppTheme.primaryColor;
+    }
   }
 }
