@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/config/app_config.dart';
+import '../../../../core/services/permission_service.dart';
 import 'ticket_details_screen.dart';
 
 class QRScannerScreen extends ConsumerStatefulWidget {
@@ -16,11 +17,53 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
   bool isScanning = true;
+  bool hasPermission = false;
+  bool permissionChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkCameraPermission();
+  }
 
   @override
   void dispose() {
     controller?.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkCameraPermission() async {
+    final granted = await PermissionService.checkCameraPermission();
+    setState(() {
+      hasPermission = granted;
+      permissionChecked = true;
+    });
+    
+    if (!granted) {
+      _requestCameraPermission();
+    }
+  }
+
+  Future<void> _requestCameraPermission() async {
+    final granted = await PermissionService.requestCameraPermission();
+    setState(() {
+      hasPermission = granted;
+    });
+    
+    if (!granted) {
+      _showPermissionDialog();
+    }
+  }
+
+  void _showPermissionDialog() {
+    PermissionService.showPermissionDialog(
+      context,
+      title: 'Camera Permission Required',
+      message: 'UCI KIGALI needs camera access to scan QR codes from tickets. Please enable camera permission in settings.',
+      onSettingsPressed: () {
+        PermissionService.openAppSettings();
+      },
+    );
   }
 
   void _onQRViewCreated(QRViewController controller) {
@@ -45,6 +88,76 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!permissionChecked) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+          ),
+        ),
+      );
+    }
+
+    if (!hasPermission) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          title: const Text('Camera Permission'),
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacing24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.camera_alt_outlined,
+                  size: 64,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: AppTheme.spacing24),
+                Text(
+                  'Camera Permission Required',
+                  style: AppTheme.headlineSmall.copyWith(
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppTheme.spacing16),
+                Text(
+                  'UCI KIGALI needs camera access to scan QR codes from tickets.',
+                  style: AppTheme.bodyMedium.copyWith(
+                    color: Colors.white70,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppTheme.spacing32),
+                ElevatedButton(
+                  onPressed: _requestCameraPermission,
+                  style: AppTheme.primaryButtonStyle,
+                  child: const Text('Grant Permission'),
+                ),
+                const SizedBox(height: AppTheme.spacing16),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'Go Back',
+                    style: AppTheme.bodyMedium.copyWith(
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(

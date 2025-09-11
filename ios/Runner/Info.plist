@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>UCI Kigali</string>
+	<string>UCI KIGALI</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -45,5 +45,28 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	
+	<!-- Camera permission for QR code scanning -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs access to camera to scan QR codes from tickets</string>
+	
+	<!-- Photo library permission (optional, for future features) -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app may need access to photo library to save scanned ticket information</string>
+	
+	<!-- Microphone permission (optional, for future features) -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app may need access to microphone for audio features</string>
+	
+	<!-- Location permission (optional, for future features) -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app may need access to location for enhanced ticket validation</string>
+	
+	<!-- Network permission for API calls -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>
