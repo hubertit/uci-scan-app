@@ -35,7 +35,7 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
       setState(() {
         ticketData = {
           'id': widget.ticketId,
-          'event': 'UCI Kigali Conference 2024',
+          'event': 'PREMIUM RIDE (Sunday 28)',
           'attendee': 'John Doe',
           'email': 'john.doe@example.com',
           'date': '2024-03-15',
