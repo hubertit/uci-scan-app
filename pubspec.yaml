@@ -44,7 +44,6 @@ dependencies:
   
   # QR Code scanning
   qr_code_scanner: ^1.0.1
-  permission_handler: ^11.0.1
   
   # HTTP requests
   http: ^1.1.0
