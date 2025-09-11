@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/services/permission_service.dart';
@@ -39,8 +40,12 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
       permissionChecked = true;
     });
     
+    // Only request permission if it's not granted and not permanently denied
     if (!granted) {
-      _requestCameraPermission();
+      final status = await Permission.camera.status;
+      if (status != PermissionStatus.permanentlyDenied) {
+        _requestCameraPermission();
+      }
     }
   }
 
@@ -50,8 +55,13 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
       hasPermission = granted;
     });
     
+    // Only show dialog if permission is still denied after request
     if (!granted) {
-      _showPermissionDialog();
+      // Check if permission is permanently denied
+      final status = await Permission.camera.status;
+      if (status == PermissionStatus.permanentlyDenied) {
+        _showPermissionDialog();
+      }
     }
   }
 
@@ -59,9 +69,9 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
     PermissionService.showPermissionDialog(
       context,
       title: 'Camera Permission Required',
-      message: 'UCI KIGALI needs camera access to scan QR codes from tickets. Please enable camera permission in settings.',
+      message: 'UCI KIGALI needs camera access to scan QR codes from tickets. Please go to Settings > Privacy & Security > Camera and enable access for UCI KIGALI.',
       onSettingsPressed: () {
-        // Simple approach - just request permission again
+        // Try requesting permission one more time
         _requestCameraPermission();
       },
     );
