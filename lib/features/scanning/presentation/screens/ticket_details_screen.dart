@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/primary_button.dart';
+import '../../data/models/ticket_scan_request.dart';
+import '../../data/models/ticket_scan_response.dart';
+import '../../data/services/ticket_scan_service.dart';
 
 class TicketDetailsScreen extends ConsumerStatefulWidget {
   final String ticketId;
@@ -17,7 +20,7 @@ class TicketDetailsScreen extends ConsumerStatefulWidget {
 
 class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
   bool isLoading = true;
-  Map<String, dynamic>? ticketData;
+  TicketScanResponse? scanResponse;
   String? errorMessage;
 
   @override
@@ -28,28 +31,36 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
 
   Future<void> _fetchTicketData() async {
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      // Validate ticket code format
+      if (!TicketScanService.isValidTicketCode(widget.ticketId)) {
+        setState(() {
+          errorMessage = 'Invalid ticket code format. Expected format: UCI-XXXXXX';
+          isLoading = false;
+        });
+        return;
+      }
+
+      // Create scan request
+      final request = TicketScanRequest(
+        ticketCode: widget.ticketId,
+        scannedBy: 'Scanner App', // You can make this configurable
+        scanLocation: 'Mobile Scanner', // You can make this configurable
+        scanDeviceId: 'MOBILE-001', // You can make this configurable
+      );
+
+      // Call the API
+      final response = await TicketScanService.scanTicket(request);
       
-      // Mock ticket data
       setState(() {
-        ticketData = {
-          'id': widget.ticketId,
-          'event': 'PREMIUM RIDE (Sunday 28)',
-          'attendee': 'John Doe',
-          'email': 'john.doe@example.com',
-          'date': '2024-03-15',
-          'venue': 'Kigali Convention Centre',
-          'status': 'valid',
-          'area': widget.ticketId.contains('LOC') ? 'LOC/UCI' : 'Sales', // Dynamic based on ticket ID
-          'ticketType': 'VIP', // Will come from API - determines frame color
-          'frameColor': '#FF6B35', // Will come from API - hex color for frame
-        };
+        scanResponse = response;
         isLoading = false;
+        if (!response.success) {
+          errorMessage = response.error ?? response.message;
+        }
       });
     } catch (e) {
       setState(() {
-        errorMessage = 'Failed to fetch ticket data';
+        errorMessage = 'Failed to fetch ticket data: ${e.toString()}';
         isLoading = false;
       });
     }
@@ -73,7 +84,9 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
               )
             : errorMessage != null
                 ? _buildErrorState()
-                : _buildTicketDetails(),
+                : scanResponse != null
+                    ? _buildTicketDetails()
+                    : const SizedBox(),
       ),
     );
   }
@@ -111,6 +124,7 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
               setState(() {
                 isLoading = true;
                 errorMessage = null;
+                scanResponse = null;
               });
               _fetchTicketData();
             },
@@ -127,60 +141,6 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Status Card
-          Container(
-            padding: const EdgeInsets.all(AppTheme.spacing20),
-            decoration: BoxDecoration(
-              color: AppTheme.successColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(AppTheme.borderRadius16),
-              border: Border.all(
-                color: AppTheme.successColor.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppTheme.successColor,
-                    borderRadius: BorderRadius.circular(AppTheme.borderRadius12),
-                  ),
-                  child: const Icon(
-                    Icons.check_circle,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: AppTheme.spacing16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ticket Valid',
-                        style: AppTheme.titleMedium.copyWith(
-                          color: AppTheme.successColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: AppTheme.spacing4),
-                      Text(
-                        'This ticket is valid and ready to use',
-                        style: AppTheme.bodySmall.copyWith(
-                          color: AppTheme.textSecondaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: AppTheme.spacing16),
-          
           // Ticket ID Card
           Container(
             padding: const EdgeInsets.all(AppTheme.spacing20),
@@ -221,7 +181,7 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
                       ),
                       const SizedBox(height: AppTheme.spacing4),
                       Text(
-                        widget.ticketId,
+                        scanResponse?.ticket?.ticketCode ?? widget.ticketId,
                         style: AppTheme.bodyMedium.copyWith(
                           color: AppTheme.textPrimaryColor,
                           fontWeight: FontWeight.w500,
@@ -237,13 +197,18 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
           
           const SizedBox(height: AppTheme.spacing16),
           
+          // Package & Date Card
+          if (scanResponse?.package != null) _buildPackageCard(),
+          
+          const SizedBox(height: AppTheme.spacing16),
+          
           // Ticket Type Indicator
           _buildTicketTypeIndicator(),
           
           const SizedBox(height: AppTheme.spacing16),
           
           // Area Indicator
-          _buildAreaIndicator(),
+          if (scanResponse?.ticket?.seatArea != null) _buildAreaIndicator(),
           
           const SizedBox(height: AppTheme.spacing16),
           
@@ -306,12 +271,14 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
       ),
       child: Column(
         children: [
-          _buildInfoRow('Event', ticketData!['event']),
-          _buildInfoRow('Attendee', ticketData!['attendee']),
-          _buildInfoRow('Email', ticketData!['email']),
-          _buildInfoRow('Date', ticketData!['date']),
-          _buildInfoRow('Venue', ticketData!['venue']),
-          _buildInfoRow('Ticket Type', ticketData!['ticketType']),
+          if (scanResponse?.customer?.name != null)
+            _buildInfoRow('Attendee', scanResponse!.customer!.name),
+          if (scanResponse?.customer?.email != null)
+            _buildInfoRow('Email', scanResponse!.customer!.email),
+          if (scanResponse?.order?.orderCode != null)
+            _buildInfoRow('Order Code', scanResponse!.order!.orderCode),
+          if (scanResponse?.ticket?.ticketStatus != null)
+            _buildInfoRow('Status', scanResponse!.ticket!.ticketStatus.toUpperCase()),
         ],
       ),
     );
@@ -349,8 +316,10 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
   }
 
   Widget _buildTicketTypeIndicator() {
-    final ticketType = ticketData!['ticketType'] as String;
-    final frameColor = _parseColor(ticketData!['frameColor'] as String);
+    final ticketType = scanResponse?.ticket?.ticketStatus == 'active' ? 'ACTIVE' : 'USED';
+    final frameColor = scanResponse?.ticket?.ticketStatus == 'active' 
+        ? AppTheme.successColor 
+        : AppTheme.errorColor;
     
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacing20),
@@ -383,7 +352,7 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Ticket Type',
+                  'Ticket Status',
                   style: AppTheme.titleMedium.copyWith(
                     color: frameColor,
                     fontWeight: FontWeight.w600,
@@ -399,7 +368,9 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
                 ),
                 const SizedBox(height: AppTheme.spacing4),
                 Text(
-                  'This ticket type determines your access level',
+                  scanResponse?.ticket?.ticketStatus == 'active' 
+                      ? 'This ticket is valid and ready to use'
+                      : 'This ticket has already been used',
                   style: AppTheme.bodySmall.copyWith(
                     color: AppTheme.textSecondaryColor,
                   ),
@@ -413,8 +384,8 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
   }
 
   Widget _buildAreaIndicator() {
-    final area = ticketData!['area'] as String;
-    final isSales = area == 'Sales';
+    final area = scanResponse?.ticket?.seatArea ?? 'Unknown';
+    final isSales = area.toLowerCase() == 'sales';
     
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacing20),
@@ -482,20 +453,181 @@ class _TicketDetailsScreenState extends ConsumerState<TicketDetailsScreen> {
     );
   }
 
-  Color _parseColor(String hexColor) {
-    try {
-      // Remove # if present
-      String cleanHex = hexColor.replaceAll('#', '');
-      
-      // Add alpha if not present (assume full opacity)
-      if (cleanHex.length == 6) {
-        cleanHex = 'FF$cleanHex';
+  Widget _buildPackageCard() {
+    final package = scanResponse!.package!;
+    final isUsed = scanResponse?.ticket?.ticketStatus == 'used';
+    final cardColor = isUsed ? AppTheme.errorColor : AppTheme.successColor;
+    
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacing20),
+      decoration: BoxDecoration(
+        color: cardColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius16),
+        border: Border.all(
+          color: cardColor.withOpacity(0.3),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(AppTheme.borderRadius12),
+                ),
+                child: const Icon(
+                  Icons.event,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: AppTheme.spacing16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Event Package',
+                      style: AppTheme.titleMedium.copyWith(
+                        color: cardColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.spacing4),
+                    Text(
+                      package.packageTitle,
+                      style: AppTheme.bodyLarge.copyWith(
+                        color: AppTheme.textPrimaryColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spacing16),
+          Container(
+            padding: const EdgeInsets.all(AppTheme.spacing12),
+            decoration: BoxDecoration(
+              color: cardColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(AppTheme.borderRadius8),
+              border: Border.all(
+                color: cardColor.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  color: cardColor,
+                  size: 20,
+                ),
+                const SizedBox(width: AppTheme.spacing8),
+                Text(
+                  'Event Date',
+                  style: AppTheme.bodyMedium.copyWith(
+                    color: AppTheme.textSecondaryColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: AppTheme.spacing8),
+                Expanded(
+                  child: Text(
+                    package.eventDate,
+                    style: AppTheme.bodyMedium.copyWith(
+                      color: AppTheme.textPrimaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getTicketColor() {
+    final package = scanResponse?.package;
+    final seatArea = scanResponse?.ticket?.seatArea;
+    
+    if (package?.eventDate == null) {
+      return AppTheme.primaryColor; // Default color
+    }
+
+    // Parse the date (assuming format like "2025-09-28" or "28/09/2025")
+    final eventDate = package!.eventDate;
+    String dayMonth = '';
+    
+    // Handle different date formats
+    if (eventDate.contains('/')) {
+      // Format: "28/09/2025" -> extract "28/9"
+      final parts = eventDate.split('/');
+      if (parts.length >= 2) {
+        dayMonth = '${int.parse(parts[0])}/${int.parse(parts[1])}';
       }
+    } else if (eventDate.contains('-')) {
+      // Format: "2025-09-28" -> extract "28/9"
+      final parts = eventDate.split('-');
+      if (parts.length >= 3) {
+        dayMonth = '${int.parse(parts[2])}/${int.parse(parts[1])}';
+      }
+    }
+
+    // Check if it's a parking ticket (ignore as requested)
+    if (package.packageTitle.toLowerCase().contains('parking')) {
+      return AppTheme.primaryColor; // Default blue for parking
+    }
+
+    // Color logic based on date and seat area
+    switch (dayMonth) {
+      case '21/9':
+        return Colors.yellow;
       
-      return Color(int.parse(cleanHex, radix: 16));
-    } catch (e) {
-      // Fallback to primary color if parsing fails
-      return AppTheme.primaryColor;
+      case '22/9':
+        return Colors.red;
+      
+      case '23/9':
+        return Colors.blue;
+      
+      case '24/9':
+        return Colors.green;
+      
+      case '25/9':
+        return Colors.black;
+      
+      case '26/9':
+        return Colors.blue;
+      
+      case '27/9':
+        if (seatArea?.toLowerCase().contains('uci') == true || 
+            seatArea?.toLowerCase().contains('loc') == true) {
+          return Colors.red;
+        } else if (seatArea?.toLowerCase().contains('sales') == true) {
+          return Colors.yellow;
+        }
+        return Colors.blue;
+      
+      case '28/9':
+        if (seatArea?.toLowerCase().contains('uci') == true || 
+            seatArea?.toLowerCase().contains('loc') == true) {
+          return Colors.green;
+        } else if (seatArea?.toLowerCase().contains('sales') == true) {
+          return Colors.black;
+        }
+        return Colors.blue;
+      
+      default:
+        return AppTheme.primaryColor; // Default blue
     }
   }
+
 }

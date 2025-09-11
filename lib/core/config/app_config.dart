@@ -4,7 +4,7 @@ class AppConfig {
   static const String appBuildNumber = '1';
   
   // API Configuration
-  static const String baseUrl = 'https://api.ucikigali.com';
+  static const String baseUrl = 'https://api.etike.rw';
   static const String apiVersion = 'v1';
   static const Duration apiTimeout = Duration(seconds: 30);
   
@@ -25,8 +25,6 @@ class AppConfig {
   static const String userDataKey = 'user_data';
   static const String rememberMeKey = 'remember_me';
   
-  // Mock API Endpoints (for development)
-  static const String mockLoginEndpoint = '/auth/login';
-  static const String mockTicketEndpoint = '/tickets';
-  static const String mockScanEndpoint = '/scan';
+  // API Endpoints
+  static const String scanEndpoint = '/tickets/tickets/scan.php';
 }

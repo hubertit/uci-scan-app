@@ -26,6 +26,19 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs access to camera to scan QR codes from tickets</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app may need access to location for enhanced ticket validation</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app may need access to microphone for audio features</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app may need access to photo library to save scanned ticket information</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -45,28 +58,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	
-	<!-- Camera permission for QR code scanning -->
-	<key>NSCameraUsageDescription</key>
-	<string>This app needs access to camera to scan QR codes from tickets</string>
-	
-	<!-- Photo library permission (optional, for future features) -->
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app may need access to photo library to save scanned ticket information</string>
-	
-	<!-- Microphone permission (optional, for future features) -->
-	<key>NSMicrophoneUsageDescription</key>
-	<string>This app may need access to microphone for audio features</string>
-	
-	<!-- Location permission (optional, for future features) -->
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app may need access to location for enhanced ticket validation</string>
-	
-	<!-- Network permission for API calls -->
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
 </dict>
 </plist>

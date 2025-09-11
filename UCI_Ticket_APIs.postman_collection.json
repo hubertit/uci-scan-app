@@ -1,0 +1,251 @@
+{
+	"info": {
+		"_postman_id": "uci-ticket-apis-2025",
+		"name": "UCI Ticket APIs",
+		"description": "Complete API collection for UCI Kigali ticket scanning system",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "List Tickets",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.etike.rw/tickets/tickets/list.php",
+					"protocol": "https",
+					"host": [
+						"api",
+						"etike",
+						"rw"
+					],
+					"path": [
+						"tickets",
+						"tickets",
+						"list.php"
+					]
+				},
+				"description": "Get all tickets with optional filtering"
+			},
+			"response": []
+		},
+		{
+			"name": "List Tickets - Filter by Scan Status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.etike.rw/tickets/tickets/list.php?scan_status=unscanned",
+					"protocol": "https",
+					"host": [
+						"api",
+						"etike",
+						"rw"
+					],
+					"path": [
+						"tickets",
+						"tickets",
+						"list.php"
+					],
+					"query": [
+						{
+							"key": "scan_status",
+							"value": "unscanned"
+						}
+					]
+				},
+				"description": "Get only unscanned tickets"
+			},
+			"response": []
+		},
+		{
+			"name": "List Tickets - Filter by Order ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.etike.rw/tickets/tickets/list.php?order_id=78",
+					"protocol": "https",
+					"host": [
+						"api",
+						"etike",
+						"rw"
+					],
+					"path": [
+						"tickets",
+						"tickets",
+						"list.php"
+					],
+					"query": [
+						{
+							"key": "order_id",
+							"value": "78"
+						}
+					]
+				},
+				"description": "Get tickets for specific order"
+			},
+			"response": []
+		},
+		{
+			"name": "Validate Ticket by Code",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.etike.rw/tickets/tickets/validate.php?ticket_code=UCI-123456",
+					"protocol": "https",
+					"host": [
+						"api",
+						"etike",
+						"rw"
+					],
+					"path": [
+						"tickets",
+						"tickets",
+						"validate.php"
+					],
+					"query": [
+						{
+							"key": "ticket_code",
+							"value": "UCI-123456"
+						}
+					]
+				},
+				"description": "Validate ticket by ticket code (UCI-XXXXXX format)"
+			},
+			"response": []
+		},
+		{
+			"name": "Validate Ticket by Order Code",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.etike.rw/tickets/tickets/validate.php?order_code=ETK-1234567",
+					"protocol": "https",
+					"host": [
+						"api",
+						"etike",
+						"rw"
+					],
+					"path": [
+						"tickets",
+						"tickets",
+						"validate.php"
+					],
+					"query": [
+						{
+							"key": "order_code",
+							"value": "ETK-1234567"
+						}
+					]
+				},
+				"description": "Validate ticket by order code (ETK-XXXXXXX format)"
+			},
+			"response": []
+		},
+		{
+			"name": "Generate Tickets for Order",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"order_id\": 78,\n    \"force_regenerate\": true\n}"
+				},
+				"url": {
+					"raw": "https://api.etike.rw/tickets/tickets/generate.php",
+					"protocol": "https",
+					"host": [
+						"api",
+						"etike",
+						"rw"
+					],
+					"path": [
+						"tickets",
+						"tickets",
+						"generate.php"
+					]
+				},
+				"description": "Generate tickets for a specific order"
+			},
+			"response": []
+		},
+		{
+			"name": "Generate All Tickets",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "force_regenerate",
+							"value": "true"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://api.etike.rw/tickets/tickets/generate_all.php",
+					"protocol": "https",
+					"host": [
+						"api",
+						"etike",
+						"rw"
+					],
+					"path": [
+						"tickets",
+						"tickets",
+						"generate_all.php"
+					]
+				},
+				"description": "Generate all tickets for confirmed and paid orders"
+			},
+			"response": []
+		},
+		{
+			"name": "Scan Ticket",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"ticket_code\": \"UCI-123456\",\n    \"scanned_by\": \"Scanner Name\",\n    \"scan_location\": \"Main Entrance\",\n    \"scan_device_id\": \"DEVICE-001\"\n}"
+				},
+				"url": {
+					"raw": "https://api.etike.rw/tickets/tickets/scan.php",
+					"protocol": "https",
+					"host": [
+						"api",
+						"etike",
+						"rw"
+					],
+					"path": [
+						"tickets",
+						"tickets",
+						"scan.php"
+					]
+				},
+				"description": "Scan a ticket and mark it as used"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://api.etike.rw/tickets/tickets"
+		}
+	]
+}

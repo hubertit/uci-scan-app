@@ -15,7 +15,7 @@ class QRScannerScreen extends ConsumerStatefulWidget {
 class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
-  bool isScanning = true;
+  bool _isProcessing = false;
 
   @override
   void dispose() {
@@ -26,20 +26,22 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
     controller.scannedDataStream.listen((scanData) {
-      if (isScanning) {
-        setState(() {
-          isScanning = false;
-        });
-        
-        // Navigate to ticket details screen
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => TicketDetailsScreen(
-              ticketId: scanData.code ?? '',
-            ),
+      // Prevent multiple rapid scans
+      if (_isProcessing) return;
+      
+      _isProcessing = true;
+      
+      // Navigate to ticket details screen
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => TicketDetailsScreen(
+            ticketId: scanData.code ?? '',
           ),
-        );
-      }
+        ),
+      ).then((_) {
+        // Reset processing flag when returning from ticket details
+        _isProcessing = false;
+      });
     });
   }
 
@@ -50,8 +52,8 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text('Scan QR Code'),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         elevation: 0,
       ),
       body: Stack(
